@@ -1,0 +1,17 @@
+services:
+  dev:
+    build:
+      context: .
+      args:
+        UID: ${UID}
+        GID: ${GID}
+        USERNAME: appuser
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+      - ./.hf-cache:/workspace/.hf-cache
+    env_file:
+      - .env
+    environment:
+      HF_HOME: /workspace/.hf-cache
+    command: bash
