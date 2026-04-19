@@ -1,0 +1,53 @@
+services:
+  mlflow:
+    build:
+      context: .
+      dockerfile: mlflow_server/Dockerfile
+    container_name: mlflow-server
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./mlflow_data:/server
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:5000/', timeout=5)"
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 15s
+    networks:
+      - mlflow-net
+
+  trainer:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+      args:
+        LOCAL_UID: ${LOCAL_UID:-1000}
+        LOCAL_GID: ${LOCAL_GID:-1000}
+    container_name: mlflow-client
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      EXPERIMENT_NAME: wine-model-comparison
+      HOME: /tmp
+      USER: appuser
+      MPLCONFIGDIR: /tmp/matplotlib
+      GIT_PYTHON_REFRESH: quiet
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./mlflow_data:/server
+    networks:
+      - mlflow-net
+
+networks:
+  mlflow-net:
