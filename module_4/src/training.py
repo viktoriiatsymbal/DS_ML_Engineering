@@ -18,23 +18,49 @@ TARGET_COL = "quality_class"
 def build_models():
     return [
         (
-            "logreg",
-            LogisticRegression(max_iter=1000, random_state=42),
+            "logreg_C0.01",
+            LogisticRegression(max_iter=1000, random_state=42, C=0.01),
+            {"model_type": "logreg", "C": 0.01},
+        ),
+        (
+            "logreg_C0.1",
+            LogisticRegression(max_iter=1000, random_state=42, C=0.1),
+            {"model_type": "logreg", "C": 0.1},
+        ),
+        (
+            "logreg_C1.0",
+            LogisticRegression(max_iter=1000, random_state=42, C=1.0),
             {"model_type": "logreg", "C": 1.0},
         ),
         (
-            "random_forest",
-            RandomForestClassifier(
-                n_estimators=100,
-                max_depth=5,
-                random_state=42,
-            ),
+            "random_forest_depth3",
+            RandomForestClassifier(n_estimators=100, max_depth=3, random_state=42),
+            {"model_type": "random_forest", "n_estimators": 100, "max_depth": 3},
+        ),
+        (
+            "random_forest_depth5",
+            RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42),
             {"model_type": "random_forest", "n_estimators": 100, "max_depth": 5},
         ),
         (
-            "svc",
+            "random_forest_depth10",
+            RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42),
+            {"model_type": "random_forest", "n_estimators": 100, "max_depth": 10},
+        ),
+        (
+            "svc_C0.1",
+            SVC(kernel="rbf", C=0.1, probability=True, random_state=42),
+            {"model_type": "svc", "kernel": "rbf", "C": 0.1},
+        ),
+        (
+            "svc_C1.0",
             SVC(kernel="rbf", C=1.0, probability=True, random_state=42),
             {"model_type": "svc", "kernel": "rbf", "C": 1.0},
+        ),
+        (
+            "svc_C10.0",
+            SVC(kernel="rbf", C=10.0, probability=True, random_state=42),
+            {"model_type": "svc", "kernel": "rbf", "C": 10.0},
         ),
     ]
 
