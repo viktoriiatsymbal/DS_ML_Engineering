@@ -1,0 +1,230 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: module5-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - deploy-net
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: mlflow_server/Dockerfile
+    container_name: mlflow-server
+    user: "${LOCAL_UID:-1000}:0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./mlflow_data:/server
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:5000/', timeout=5)"
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 15s
+    networks:
+      - deploy-net
+
+  airflow-init:
+    image: apache/airflow:2.10.5-python3.11
+    container_name: airflow-init
+    user: "${LOCAL_UID:-1000}:0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__SECRET_KEY: module5-secret-key
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      APP_DATA_DIR: /opt/airflow/data
+      PROJECT_ROOT: /opt/airflow/project
+      PYTEST_ADDOPTS: "-o cache_dir=/opt/airflow/data/.pytest_cache"
+      _PIP_ADDITIONAL_REQUIREMENTS: >
+        pandas==2.1.4
+        numpy==1.26.4
+        scikit-learn==1.6.1
+        mlflow==3.0.1
+        requests==2.32.3
+        matplotlib==3.8.4
+        pytest==8.3.5
+        psycopg2-binary==2.9.10
+        docker==7.1.0
+        Flask==2.2.5
+        Werkzeug==2.2.3
+        protobuf==4.25.6
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/project/src
+      - ./tests:/opt/airflow/project/tests
+      - ./pyproject.toml:/opt/airflow/project/pyproject.toml
+      - ./requirements.txt:/opt/airflow/project/requirements.txt
+      - ./online.Dockerfile:/opt/airflow/project/online.Dockerfile
+      - ./data:/opt/airflow/data
+      - ./logs:/opt/airflow/logs
+      - ./build:/opt/airflow/project/build
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: >
+      bash -c "
+      pip install -e /opt/airflow/project &&
+      airflow db migrate &&
+      airflow users create
+      --username airflow
+      --password airflow
+      --firstname Airflow
+      --lastname User
+      --role Admin
+      --email airflow@example.com || true
+      "
+    networks:
+      - deploy-net
+
+  airflow-webserver:
+    image: apache/airflow:2.10.5-python3.11
+    container_name: airflow-webserver
+    user: "${LOCAL_UID:-1000}:0"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__SECRET_KEY: module5-secret-key
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      APP_DATA_DIR: /opt/airflow/data
+      PROJECT_ROOT: /opt/airflow/project
+      PYTEST_ADDOPTS: "-o cache_dir=/opt/airflow/data/.pytest_cache"
+      _PIP_ADDITIONAL_REQUIREMENTS: >
+        pandas==2.1.4
+        numpy==1.26.4
+        scikit-learn==1.6.1
+        mlflow==3.0.1
+        requests==2.32.3
+        matplotlib==3.8.4
+        pytest==8.3.5
+        psycopg2-binary==2.9.10
+        docker==7.1.0
+        Flask==2.2.5
+        Werkzeug==2.2.3
+        protobuf==4.25.6
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/project/src
+      - ./tests:/opt/airflow/project/tests
+      - ./pyproject.toml:/opt/airflow/project/pyproject.toml
+      - ./requirements.txt:/opt/airflow/project/requirements.txt
+      - ./online.Dockerfile:/opt/airflow/project/online.Dockerfile
+      - ./data:/opt/airflow/data
+      - ./logs:/opt/airflow/logs
+      - ./build:/opt/airflow/project/build
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: >
+      bash -c "pip install -e /opt/airflow/project && airflow webserver"
+    networks:
+      - deploy-net
+
+  airflow-scheduler:
+    image: apache/airflow:2.10.5-python3.11
+    container_name: airflow-scheduler
+    user: "${LOCAL_UID:-1000}:0"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__SECRET_KEY: module5-secret-key
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      APP_DATA_DIR: /opt/airflow/data
+      PROJECT_ROOT: /opt/airflow/project
+      PYTEST_ADDOPTS: "-o cache_dir=/opt/airflow/data/.pytest_cache"
+      _PIP_ADDITIONAL_REQUIREMENTS: >
+        pandas==2.1.4
+        numpy==1.26.4
+        scikit-learn==1.6.1
+        mlflow==3.0.1
+        requests==2.32.3
+        matplotlib==3.8.4
+        pytest==8.3.5
+        psycopg2-binary==2.9.10
+        docker==7.1.0
+        Flask==2.2.5
+        Werkzeug==2.2.3
+        protobuf==4.25.6
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/project/src
+      - ./tests:/opt/airflow/project/tests
+      - ./pyproject.toml:/opt/airflow/project/pyproject.toml
+      - ./requirements.txt:/opt/airflow/project/requirements.txt
+      - ./online.Dockerfile:/opt/airflow/project/online.Dockerfile
+      - ./data:/opt/airflow/data
+      - ./logs:/opt/airflow/logs
+      - ./build:/opt/airflow/project/build
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: >
+      bash -c "pip install -e /opt/airflow/project && airflow scheduler"
+    networks:
+      - deploy-net
+
+  cron-trigger:
+    image: alpine:3.20
+    container_name: airflow-cron-trigger
+    depends_on:
+      airflow-webserver:
+        condition: service_started
+    command: >
+      sh -c "
+      apk add --no-cache curl &&
+      echo '0 9 * * * curl -s -X POST http://airflow:airflow@airflow-webserver:8080/api/v1/dags/wine_batch_deployment_pipeline/dagRuns -H \"Content-Type: application/json\" -d \"{}\"' > /etc/crontabs/root &&
+      crond -f -l 8
+      "
+    networks:
+      - deploy-net
+
+  online-api:
+    image: wine-online:latest
+    container_name: wine-online-api
+    profiles: ["online"]
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_DIR: /app/model
+    networks:
+      - deploy-net
+
+networks:
+  deploy-net:
+    driver: bridge
