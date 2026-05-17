@@ -1,0 +1,30 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+# data/
+logs/
+build/
+mlflow_data/
+postgres_data/
+.env
+*.egg-info/
+dist/
+
+
+.dvc/cache/
+.dvc/tmp/
+data/raw/winequality-red.csv
+data/dvc_basic/
+data/dvc_scaled/
+data/dvc_aggregated/
+models/
+data/interim/
+data/processed/
+data/folds/
+data/reports/
+# build/
+# mlflow_data/
+# mlflow_server/
+# postgres_data/
+# logs/
