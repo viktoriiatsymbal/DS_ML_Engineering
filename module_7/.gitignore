@@ -24,8 +24,3 @@ data/interim/
 data/processed/
 data/folds/
 data/reports/
-# build/
-# mlflow_data/
-# mlflow_server/
-# postgres_data/
-# logs/
