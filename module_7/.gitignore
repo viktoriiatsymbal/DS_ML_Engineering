@@ -23,4 +23,4 @@ models/
 data/interim/
 data/processed/
 data/folds/
-data/reports/
+data/reports/mlflow_server/
