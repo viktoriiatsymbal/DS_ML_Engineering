@@ -45,13 +45,13 @@ def build_online_docker_image(model_uri, image_tag="wine-online:latest"):
         path=str(PROJECT_ROOT),
         dockerfile="online.Dockerfile",
         tag=image_tag,
-        rm=True) # Після build прибрати intermediate containers.
+        rm=True)
 
-    log_lines = [] # Збирає останні Docker build logs.
+    log_lines = []
     for line in logs:
         if "stream" in line:
             log_lines.append(line["stream"].strip())
     return (
-        f"Prepared model artifact at: {model_path}\n" # Повертає summary для Airflow logs.
+        f"Prepared model artifact at: {model_path}\n"
         f"Built image: {image_tag}\n"
         + "\n".join(log_lines[-20:]))

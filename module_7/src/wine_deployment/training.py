@@ -62,13 +62,6 @@ def build_models():
         ),
     ]
 
-# Ти деплоїш не просто classifier, а:
-
-# preprocessor + model
-
-# I save the full sklearn Pipeline, not only the classifier.
-# This is important because the same preprocessing must be applied in training,
-# batch inference, and online inference.
 def make_pipeline(model, feature_columns):
     return Pipeline(
         steps=[

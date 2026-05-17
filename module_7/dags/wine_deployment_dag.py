@@ -16,7 +16,7 @@ from wine_deployment.training import register_best_model, train_models_with_mlfl
     dag_id="wine_batch_deployment_pipeline",
     start_date=datetime(2026, 5, 2),
     schedule=None,
-    catchup=False, # Airflow не буде запускати старі пропущені DAG runs.
+    catchup=False,
     tags=["module5", "deployment", "batch", "rest"],
 )
 def wine_batch_deployment_pipeline():
@@ -57,7 +57,7 @@ def wine_batch_deployment_pipeline():
     def batch_predict_task(model_uri, split_paths):
         return run_batch_inference(model_uri, split_paths)
 
-    @task # будує Docker image for online API.
+    @task
     def build_online_image_task(model_uri):
         return build_online_docker_image(model_uri)
 
@@ -72,15 +72,10 @@ def wine_batch_deployment_pipeline():
     best_run_info = train_task(split_paths, folds_path)
     model_uri = register_task(best_run_info)
 
-# Batch prediction бере модель з deployment artifact, а не тренує заново.
     predictions_path = batch_predict_task(model_uri, split_paths)
 
-# Online Docker image будується з тією самою model URI.
     image_result = build_online_image_task(model_uri)
 
-
-# Airflow dependency.
-# Спочатку мають бути batch predictions, потім build online image.
     predictions_path >> image_result
 
 wine_batch_deployment_pipeline()
