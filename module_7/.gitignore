@@ -6,6 +6,8 @@ __pycache__/
 logs/
 build/
 mlflow_data/
+mlflow_server/
+mlruns/
 postgres_data/
 .env
 *.egg-info/
@@ -19,8 +21,11 @@ data/raw/winequality-red.csv
 data/dvc_basic/
 data/dvc_scaled/
 data/dvc_aggregated/
+data/reports/
+data/dvc_reports/
 models/
 data/interim/
 data/processed/
 data/folds/
 data/reports/mlflow_server/
+dvclive/plots/
