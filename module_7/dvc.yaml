@@ -1,0 +1,62 @@
+stages:
+  preprocess_basic:
+    cmd: PYTHONPATH=src python src/wine_deployment/dvc_preprocess_basic.py
+    deps:
+      - src/wine_deployment/dvc_preprocess_basic.py
+      - data/raw/winequality-red.csv
+    params:
+      - data.raw_path
+      - data.target_col
+      - data.original_target_col
+      - preprocess_basic.output_path
+    outs:
+      - data/dvc_basic/wine_basic.csv
+
+  preprocess_scaled:
+    cmd: PYTHONPATH=src python src/wine_deployment/dvc_preprocess_scaled.py
+    deps:
+      - src/wine_deployment/dvc_preprocess_scaled.py
+      - data/dvc_basic/wine_basic.csv
+    params:
+      - preprocess_scaled.input_path
+      - preprocess_scaled.output_path
+      - data.target_col
+      - data.original_target_col
+    outs:
+      - data/dvc_scaled/wine_scaled.csv
+
+  preprocess_aggregated:
+    cmd: PYTHONPATH=src python src/wine_deployment/dvc_aggregate.py
+    deps:
+      - src/wine_deployment/dvc_aggregate.py
+      - data/dvc_basic/wine_basic.csv
+    params:
+      - preprocess_aggregated.input_path
+      - preprocess_aggregated.output_path
+    outs:
+      - data/dvc_aggregated/wine_aggregated.csv
+
+  train:
+    cmd: APP_DATA_DIR=data PYTHONPATH=src python src/wine_deployment/dvc_train.py
+    deps:
+      - src/wine_deployment/dvc_train.py
+      - src/wine_deployment/training.py
+      - src/wine_deployment/preprocessing.py
+      - data/dvc_basic/wine_basic.csv
+    params:
+      - data.target_col
+      - data.original_target_col
+      - data.test_size
+      - data.random_state
+      - train.input_path
+      - train.results_path
+      - train.best_info_path
+      - train.model_uri_path
+      - train.n_splits
+    outs:
+      - data/dvc_reports/model_comparison.csv
+      - data/dvc_reports/best_model_info.json
+      - data/dvc_reports/model_uri.txt
+    metrics:
+      - dvclive/metrics.json:
+          cache: false

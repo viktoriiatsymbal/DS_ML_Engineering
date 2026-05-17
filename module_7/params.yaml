@@ -1,0 +1,24 @@
+data:
+  raw_path: data/raw/winequality-red.csv
+  target_col: quality_class
+  original_target_col: quality
+  test_size: 0.2
+  random_state: 42
+
+preprocess_basic:
+  output_path: data/dvc_basic/wine_basic.csv
+
+preprocess_scaled:
+  input_path: data/dvc_basic/wine_basic.csv
+  output_path: data/dvc_scaled/wine_scaled.csv
+
+preprocess_aggregated:
+  input_path: data/dvc_basic/wine_basic.csv
+  output_path: data/dvc_aggregated/wine_aggregated.csv
+
+train:
+  input_path: data/dvc_basic/wine_basic.csv
+  results_path: data/dvc_reports/model_comparison.csv
+  best_info_path: data/dvc_reports/best_model_info.json
+  model_uri_path: data/dvc_reports/model_uri.txt
+  n_splits: 5
