@@ -11,9 +11,10 @@ postgres_data/
 *.egg-info/
 dist/
 
-
+.DS_Store
 .dvc/cache/
 .dvc/tmp/
+.dvc/config.local
 data/raw/winequality-red.csv
 data/dvc_basic/
 data/dvc_scaled/
