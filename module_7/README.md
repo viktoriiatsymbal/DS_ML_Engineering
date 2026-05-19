@@ -20,12 +20,15 @@ python -m pip install -r requirements.txt
 ## DVC remote
 
 The project uses Google Drive as DVC remote storage
+The remote is configured to use a Google Cloud service account
+To reproduce from another machine, place the JSON key locally and configure:
 
 ```bash
-python -m dvc remote list
+python -m dvc remote modify --local gdrive_remote gdrive_service_account_json_file_path /path/to/service-account-key.json
+python -m dvc pull
 ```
 
-To run `dvc pull` from another machine, you must have access to the Google Drive remote folder. The custom Google OAuth app is in testing mode, so you need to be added as a test user
+The Google Drive remote folder must be shared with the service account email.
 
 ## Restore data and artifacts
 
