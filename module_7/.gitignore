@@ -29,3 +29,5 @@ data/processed/
 data/folds/
 data/reports/mlflow_server/
 dvclive/plots/
+secrets/
+*.json
