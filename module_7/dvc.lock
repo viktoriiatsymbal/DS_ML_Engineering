@@ -100,7 +100,7 @@ stages:
     outs:
     - path: data/dvc_reports/best_model_info.json
       hash: md5
-      md5: 8d0f60f912cb474bcc026ba5bee3d6cf
+      md5: 62681d06df4cae3f815596f52b6b4031
       size: 574
     - path: data/dvc_reports/model_comparison.csv
       hash: md5
@@ -108,7 +108,7 @@ stages:
       size: 639
     - path: data/dvc_reports/model_uri.txt
       hash: md5
-      md5: 56e3ece811c99b2c9a38e72289a91bc4
+      md5: 1b045bc16b9eda3348969a6d2d7017ae
       size: 43
     - path: dvclive/metrics.json
       hash: md5

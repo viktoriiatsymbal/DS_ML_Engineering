@@ -31,3 +31,4 @@ data/reports/mlflow_server/
 dvclive/plots/
 secrets/
 *.json
+.DS_Store
